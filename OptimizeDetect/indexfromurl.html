@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://unpkg.com/ml5@0.5.1/dist/ml5.min.js"></script>
+    <title>Object Detection with COCO-SSD</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+  </head>
+  <body
+    class="bg-dark vh-100 d-flex justify-content-center align-items-center text-white"
+  >
+    <img id="videoOutput" class="img-fluid rounded-5" />
+    <iframe
+      class="vh-100 w-75"
+      src="https://node-esp32cam-masum-8a7cf1e41d93.herokuapp.com"
+      frameborder="0"
+      id="sourceDetect"
+    ></iframe>
+    <script>
+      let video;
+      let detector;
+      let detections = [];
+
+      function preload() {
+        detector = ml5.objectDetector("cocossd");
+      }
+
+      function gotDetections(error, results) {
+        if (error) {
+          console.error(error);
+        }
+        detections = results;
+        detector.detect(video, gotDetections);
+      }
+
+      function setup() {
+        createCanvas(640, 480);
+        let sourceElement = document.getElementById("sourceDetect");
+        video = createVideo(sourceElement.value, videoLoaded);
+        video.size(640, 480);
+        video.hide();
+        detector.detect(video, gotDetections);
+
+        // Hide the canvas after the model has loaded
+        document.getElementById("defaultCanvas0").classList.toggle("d-none");
+      }
+
+      function draw() {
+        image(video, 0, 0, 640, 480);
+
+        for (let i = 0; i < detections.length; i++) {
+          let object = detections[i];
+          if (object.label === "person") {
+            stroke(0, 255, 0);
+            strokeWeight(4);
+            noFill();
+            rect(object.x, object.y, object.width, object.height);
+            noStroke();
+            fill(255);
+            textSize(24);
+            text(object.label, object.x + 10, object.y + 24);
+          }
+        }
+
+        // Display the video stream on the img element
+        document.getElementById("videoOutput").src =
+          canvas.toDataURL("image/jpeg");
+      }
+    </script>
+  </body>
+</html>
